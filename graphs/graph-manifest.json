@@ -1,0 +1,21 @@
+{
+    "graphs": [
+      {
+        "id": "graph_default",
+        "name": "graph_default",
+        "description": "",
+        "filename": "graph.json"
+      },{
+        "id": "narrow_60mins_v1",
+        "name": "What is Knowledge? Narrow-Deep 1hr",
+        "description": "Max responses = 2",
+        "filename": "graph_narrow_60mins_v1.json"
+      },
+      {
+        "id": "broad_60mins_v1",
+        "name": "What is Knowledge? Broad-Shallow 1hr",
+        "description": "Max repsonses = 100",
+        "filename": "graph_broad_60mins_v1.json"
+      }
+    ]
+  }

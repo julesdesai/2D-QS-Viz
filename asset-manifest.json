@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/2D-QS-Viz/static/css/main.6a0e572f.css",
+    "main.js": "/2D-QS-Viz/static/js/main.adb947de.js",
+    "index.html": "/2D-QS-Viz/index.html",
+    "main.6a0e572f.css.map": "/2D-QS-Viz/static/css/main.6a0e572f.css.map",
+    "main.adb947de.js.map": "/2D-QS-Viz/static/js/main.adb947de.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.6a0e572f.css",
+    "static/js/main.adb947de.js"
+  ]
+}
