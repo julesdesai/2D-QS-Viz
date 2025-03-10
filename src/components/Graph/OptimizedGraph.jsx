@@ -54,59 +54,158 @@ const OptimizedGraph = ({ data }) => {
     return findPath(node.parent_id, [targetId, ...path]);
   }, [data]);
 
-  // Utility function for creating connections - defined outside callbacks
-  const createConnections = () => {
-    if (!data || !layoutComputed || !nodePositions) {
-      console.log("Cannot create connections - missing data:", {
-        hasData: !!data,
-        layoutComputed,
-        hasNodePositions: !!nodePositions
-      });
-      return [];
+
+// Helper function to create a curved path for identity connections - DEFINED FIRST
+const calculateIdenticalPath = (start, end) => {
+  // Calculate midpoint
+  const midX = (start.x + end.x) / 2;
+  const midY = (start.y + end.y) / 2;
+  
+  // Determine if this is more horizontal or vertical
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const isMoreHorizontal = Math.abs(dx) > Math.abs(dy);
+  
+  // For horizontal lines, create a more pronounced curve
+  if (isMoreHorizontal) {
+    // Create a strong arc for horizontal connections
+    const arcHeight = Math.abs(dx) * 0.3;
+    
+    // Alternating up/down arcs based on node positions to avoid overlapping arcs
+    // This creates a somewhat randomized pattern but predictable for the same nodes
+    const nodeIdSum = parseInt(String(start.x) + String(start.y));
+    const arcDirection = (nodeIdSum % 2 === 0) ? 1 : -1;
+    
+    // Create arc control point
+    const controlPoint = {
+      x: midX,
+      y: midY + (arcHeight * arcDirection)
+    };
+    
+    // For very long horizontal lines, use multiple control points
+    if (Math.abs(dx) > 2000) {
+      return [
+        start,
+        {
+          x: start.x + dx * 0.25,
+          y: start.y + dy * 0.25 + (arcHeight * arcDirection * 0.7)
+        },
+        controlPoint,
+        {
+          x: start.x + dx * 0.75,
+          y: start.y + dy * 0.75 + (arcHeight * arcDirection * 0.7)
+        },
+        end
+      ];
     }
     
-    const newConnections = [];
+    return [start, controlPoint, end];
+  }
+  
+  // For vertical or diagonal connections, use a simpler curve
+  // Create a moderate curve perpendicular to the connection line
+  const perpX = -dy / distance * distance * 0.3;
+  const perpY = dx / distance * distance * 0.3;
+  
+  const controlPoint = {
+    x: midX + perpX,
+    y: midY + perpY
+  };
+  
+  return [start, controlPoint, end];
+};
+
+// Utility function for creating connections - DEFINED SECOND
+const createConnections = () => {
+  if (!data || !layoutComputed || !nodePositions) {
+    console.log("Cannot create connections - missing data:", {
+      hasData: !!data,
+      layoutComputed,
+      hasNodePositions: !!nodePositions
+    });
+    return [];
+  }
+  
+  const newConnections = [];
+  
+  // Create connections for all parent-child relationships
+  Object.entries(data).forEach(([childId, node]) => {
+    const parentId = node.parent_id;
     
-    // Create connections for all parent-child relationships
-    Object.entries(data).forEach(([childId, node]) => {
-      const parentId = node.parent_id;
-      
-      // Skip root node (as it has no parent)
-      if (!parentId) return;
-      
-      // Skip reason nodes if requested - we're still including them for now
-      // if (node.node_type === 'reason') return;
+    // Skip root node (as it has no parent)
+    if (!parentId) return;
+    
+    // Skip if either node position is not available
+    if (!nodePositions[parentId] || !nodePositions[childId]) {
+      console.log(`Missing node position for connection ${parentId} -> ${childId}`);
+      return;
+    }
+    
+    // Create connection based on the computed layout positions
+    const sourcePos = {
+      x: nodePositions[parentId].x,
+      y: nodePositions[parentId].y
+    };
+    
+    const targetPos = {
+      x: nodePositions[childId].x,
+      y: nodePositions[childId].y
+    };
+    
+    // Create the connection
+    newConnections.push({
+      from: sourcePos,
+      to: targetPos,
+      sourceId: parentId,
+      targetId: childId,
+      isReason: node.node_type === 'reason',
+      isIdentical: false
+    });
+  });
+  
+  // Create connections for identical nodes
+  Object.entries(data).forEach(([nodeId, node]) => {
+    // Check if this node is identical to another node
+    if (node.identical_to) {
+      const identicalToId = node.identical_to;
       
       // Skip if either node position is not available
-      if (!nodePositions[parentId] || !nodePositions[childId]) {
-        console.log(`Missing node position for connection ${parentId} -> ${childId}`);
+      if (!nodePositions[identicalToId] || !nodePositions[nodeId]) {
+        console.log(`Missing node position for identical connection ${nodeId} -> ${identicalToId}`);
         return;
       }
       
       // Create connection based on the computed layout positions
       const sourcePos = {
-        x: nodePositions[parentId].x,
-        y: nodePositions[parentId].y
+        x: nodePositions[nodeId].x,
+        y: nodePositions[nodeId].y
       };
       
       const targetPos = {
-        x: nodePositions[childId].x,
-        y: nodePositions[childId].y
+        x: nodePositions[identicalToId].x,
+        y: nodePositions[identicalToId].y
       };
       
-      // Create the connection
+      // Calculate the path with pronounced curves
+      const points = calculateIdenticalPath(sourcePos, targetPos);
+      
+      // Create the identical connection
       newConnections.push({
         from: sourcePos,
         to: targetPos,
-        sourceId: parentId,
-        targetId: childId,
-        isReason: node.node_type === 'reason'
+        sourceId: nodeId,
+        targetId: identicalToId,
+        isReason: false,
+        isIdentical: true,
+        points: points
       });
-    });
-    
-    console.log(`Created ${newConnections.length} connections`);
-    return newConnections;
-  };
+    }
+  });
+  
+  console.log(`Created ${newConnections.length} connections`);
+  return newConnections;
+};
 
   // Function to update connections - using useRef for stable reference
   const updateConnectionsRef = useRef(() => {

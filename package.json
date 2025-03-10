@@ -2,7 +2,7 @@
   "name": "graph-visualization",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://julesdesai.github.io/3D-Question-Space-Visualiser/",
+"homepage": "https://yourusername.github.io/2D-QS-Viz",
   "dependencies": {
     "@react-three/drei": "^9.x",
     "@react-three/fiber": "^8.x",
@@ -16,7 +16,7 @@
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "autoprefixer": "^10.4.20",
-    "gh-pages": "^6.0.0",
+    "gh-pages": "^6.3.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17"
   },

@@ -133,6 +133,112 @@ export class ConnectionManager {
     this.connections.set(id, connection);
   }
 
+  setIdenticalConnection(sourceId, targetId) {
+    console.log(`ConnectionManager: Setting up identity connection ${sourceId} -> ${targetId}`);
+    if (!sourceId || !targetId) {
+      console.warn('ConnectionManager: Invalid sourceId or targetId for identity connection', { sourceId, targetId });
+      return;
+    }
+
+    const id = `identity-${sourceId}-${targetId}`;
+    
+    const sourceCenter = this.coordinates.getNodeCenter(sourceId);
+    const targetCenter = this.coordinates.getNodeCenter(targetId);
+
+    if (!sourceCenter || !targetCenter) {
+      console.warn(`ConnectionManager: Missing centers for identity connection ${id}`, {
+        sourceId,
+        targetId,
+        sourceCenter,
+        targetCenter
+      });
+      return;
+    }
+
+    // Use a curved path for identity connections
+    const connection = {
+      id,
+      sourceId,
+      targetId,
+      type: 'identical',
+      from: sourceCenter,
+      to: targetCenter,
+      points: this.calculateCurvedPath(sourceCenter, targetCenter),
+      isReason: false,
+      isIdentical: true
+    };
+
+    console.log('Creating identity connection:', connection);
+    this.connections.set(id, connection);
+  }
+
+  calculateCurvedPath(start, end) {
+    // Calculate a curved path with more pronounced curve than Manhattan
+    const midX = (start.x + end.x) / 2;
+    const midY = (start.y + end.y) / 2;
+    
+    // Create an offset to make the curve more pronounced
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Calculate if this is more horizontal or vertical
+    const isMoreHorizontal = Math.abs(dx) > Math.abs(dy);
+    
+    // Create a stronger curve for horizontal lines
+    let curveMagnitude = isMoreHorizontal ? 0.5 : 0.3;
+    
+    // For very horizontal connections, create an even stronger curve
+    if (isMoreHorizontal && Math.abs(dy) < distance * 0.2) {
+      curveMagnitude = 0.8;
+    }
+    
+    // For very long horizontal connections, create an even stronger curve
+    if (isMoreHorizontal && Math.abs(dx) > 1500) {
+      curveMagnitude = Math.min(curveMagnitude + 0.3, 1.0);
+    }
+    
+    // Perpendicular offset - create a curve that's perpendicular to the line between points
+    const perpX = -dy / distance * distance * curveMagnitude;
+    const perpY = dx / distance * distance * curveMagnitude;
+    
+    // Control point with offset for a nice curve
+    const controlPoint = new Vector2D(midX + perpX, midY + perpY);
+    
+    // For extra complex paths on very long horizontal connections, create a path with multiple control points
+    if (isMoreHorizontal && Math.abs(dx) > 2000) {
+      // Create a path with three control points for very long connections
+      const controlPoint1 = new Vector2D(
+        start.x + dx * 0.25,
+        start.y + dy * 0.25 + perpY * 0.7
+      );
+      
+      const controlPoint2 = new Vector2D(
+        midX,
+        midY + perpY
+      );
+      
+      const controlPoint3 = new Vector2D(
+        start.x + dx * 0.75,
+        start.y + dy * 0.75 + perpY * 0.7
+      );
+      
+      return [
+        start,
+        controlPoint1,
+        controlPoint2,
+        controlPoint3,
+        end
+      ];
+    }
+    
+    return [
+      start,
+      controlPoint,
+      end
+    ];
+  }
+
   getScreenConnections() {
     console.log('Getting screen connections. Total connections:', this.connections.size);
     return Array.from(this.connections.values()).map(conn => {

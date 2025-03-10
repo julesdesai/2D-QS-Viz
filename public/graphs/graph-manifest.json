@@ -5,7 +5,14 @@
         "name": "graph_default",
         "description": "",
         "filename": "graph.json"
-      },{
+      },
+      {
+        "id": "graph_reasons_narrow_10mins_test",
+        "name": "Reasons v1 Visualisation",
+        "description": "",
+        "filename": "graph_reasons_narrow_10mins_test.json"
+      },
+      {
         "id": "narrow_60mins_v1",
         "name": "What is Knowledge? Narrow-Deep 1hr",
         "description": "Max responses = 2",

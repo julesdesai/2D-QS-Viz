@@ -95,13 +95,27 @@ const EnhancedNode = ({
   // Adjust the width based on node type
   const nodeWidth = isReason ? 'w-80' : 'w-96';
   
-  // Highlight borders based on node type
-  const borderStyles = isInPath ? 'ring-2 ring-blue-600' : '';
+  // Highlight borders based on node type or identity
+  let borderStyles = isInPath ? 'ring-2 ring-blue-600' : '';
+  if (identicalTo) {
+    borderStyles += ' border-blue-500 border-2 border-dashed';
+  }
   
   // Terminal status indicator text
   const getTerminalStatus = () => {
     if (isNonsense) return 'Terminal: Nonsense';
-    if (identicalTo) return `Terminal: Identity (${identicalTo})`;
+    if (identicalTo) {
+      // Get the identical node's summary if available
+      const identicalNode = data[identicalTo];
+      if (identicalNode && identicalNode.summary) {
+        // Limit the summary length to avoid overflow
+        const truncatedSummary = identicalNode.summary.length > 25 
+          ? identicalNode.summary.substring(0, 22) + '...' 
+          : identicalNode.summary;
+        return `Identical to: ${truncatedSummary}`;
+      }
+      return `Identical to Node ${identicalTo.substring(0, 8)}...`;
+    }
     return null;
   };
 
@@ -121,6 +135,7 @@ const EnhancedNode = ({
           ${borderStyles}
           ${isInPath ? 'scale-105 shadow-xl' : 'hover:shadow-xl hover:scale-105'}
           ${isNonsense ? 'opacity-70' : 'opacity-100'}
+          ${identicalTo ? 'bg-blue-50' : 'bg-white'}
           ${nodeColors.border}
           border-2
         `}
@@ -168,6 +183,16 @@ const EnhancedNode = ({
       `}>
         {node.node_type || 'node'}
       </div>
+      
+      {/* Identity badge if this node is identical to another */}
+      {identicalTo && (
+        <div className="absolute -bottom-2 -right-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full border border-blue-400 shadow-sm font-bold text-xs flex items-center">
+          <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M7 16l-4-4m0 0l4-4m-4 4h18" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Identity
+        </div>
+      )}
     </div>
   );
 };

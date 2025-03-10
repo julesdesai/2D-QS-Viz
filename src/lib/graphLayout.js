@@ -51,7 +51,10 @@ const CONSTANTS = {
     const positions = {};
     positionNodesRecursive(graphTree, positions, data, CONSTANTS.INITIAL_X, CONSTANTS.INITIAL_Y);
     
-    return positions;
+    // Apply special optimizations for identical nodes
+    const optimizedPositions = optimizeIdenticalNodesLayout(positions, data);
+    
+    return optimizedPositions;
   };
   
   /**
@@ -189,6 +192,59 @@ const CONSTANTS = {
       }
     }
   };
+
+  /**
+ * Optimizes layout for nodes that are marked as identical
+ * This helps position identical nodes closer together
+ */
+export const optimizeIdenticalNodesLayout = (positions, data) => {
+  const adjustedPositions = { ...positions };
+  
+  // Find all nodes with identical_to property
+  const identicalNodes = Object.entries(data)
+    .filter(([_, node]) => node.identical_to)
+    .map(([id, node]) => ({ id, identicalToId: node.identical_to }));
+  
+  if (identicalNodes.length === 0) {
+    return adjustedPositions; // No identical nodes to process
+  }
+  
+  console.log(`Found ${identicalNodes.length} identical node relationships to optimize`);
+  
+  // Process each identical relationship
+  identicalNodes.forEach(({ id, identicalToId }) => {
+    // Skip if either node position is not available
+    if (!adjustedPositions[id] || !adjustedPositions[identicalToId]) {
+      console.warn(`Missing position for identical nodes: ${id} -> ${identicalToId}`);
+      return;
+    }
+    
+    // Get positions
+    const nodePos = adjustedPositions[id];
+    const identicalToPos = adjustedPositions[identicalToId];
+    
+    // Calculate distance between nodes
+    const dx = nodePos.x - identicalToPos.x;
+    const dy = nodePos.y - identicalToPos.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // If nodes are already close enough, no need to adjust
+    if (distance < 1500) {
+      return;
+    }
+    
+    // Slightly move the node toward its identical counterpart
+    // We don't want to move it too close, as that would create overlaps
+    const moveRatio = 0.2; // Move 20% closer
+    
+    adjustedPositions[id] = {
+      x: nodePos.x - dx * moveRatio,
+      y: nodePos.y - dy * moveRatio
+    };
+  });
+  
+  return adjustedPositions;
+};
   
   /**
    * Positions reason nodes in a vertical stack directly centered above their parent
