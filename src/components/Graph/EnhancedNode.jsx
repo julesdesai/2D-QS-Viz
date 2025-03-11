@@ -44,8 +44,9 @@ const EnhancedNode = ({
   const identicalTo = node.identical_to;
   const isTerminal = isNonsense || identicalTo;
   
-  // Use a placeholder image - inline SVG data URL for universal compatibility
-  const placeholderImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%239ca3af'%3EPlaceholder%3C/text%3E%3C/svg%3E";
+  // Use a custom thumbnail image
+  // For GitHub Pages, use a relative path from the root of your deployed site
+  const thumbnailImage = process.env.PUBLIC_URL + "/assets/images/node-thumbnail.png"; // Update this path to match your repository structure
   
   // Truncate content for preview
   const truncateContent = (content) => {
@@ -147,9 +148,14 @@ const EnhancedNode = ({
             className="w-48 h-full bg-gray-100 node-circle"
           >
             <img 
-              src={placeholderImage} 
+              src={thumbnailImage} 
               alt={node.summary || 'Node'} 
               className="h-full w-full object-cover"
+              onError={(e) => {
+                // Fallback if image fails to load
+                e.target.onerror = null;
+                e.target.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%239ca3af'%3EImage%3C/text%3E%3C/svg%3E`;
+              }}
             />
           </div>
           

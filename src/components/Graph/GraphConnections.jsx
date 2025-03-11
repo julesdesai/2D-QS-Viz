@@ -77,35 +77,36 @@ const GraphConnections = ({ connections = [] }) => {
             // Simple quadratic curve with one control point
             pathD = `M ${points[0].x},${points[0].y} Q ${points[1].x},${points[1].y} ${points[2].x},${points[2].y}`;
           }
-        } else if (isReason || isUpwardConnection || isIdentical) {
-          // For reason connections, identical connections, or upward connections, use a curved path
-          // Make identical connections curve more dramatically to avoid passing through cards
-          const curveStrength = isIdentical ? 0.4 : 0.2;
+        } else if (isIdentical) {
+          // NEW BEHAVIOR: For identical connections without predefined points, always arc underneath
+          const dx = to.x - from.x;
+          const controlX = (from.x + to.x) / 2;
+          
+          // Calculate a control point below both nodes
+          const bottomY = Math.max(from.y, to.y);
+          const controlY = bottomY + Math.abs(dx) * 0.2 + 40; // Arc below nodes
+          
+          pathD = `M ${from.x},${from.y} Q ${controlX},${controlY} ${to.x},${to.y}`;
+        } else if (isReason || isUpwardConnection) {
+          // ORIGINAL BEHAVIOR: For reason connections or upward connections, use a curved path
+          const curveStrength = 0.2;
           const dx = to.x - from.x;
           const dy = to.y - from.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          // If very horizontal and identical, create a more dramatic curve
-          const isHorizontal = Math.abs(dx) > Math.abs(dy);
-          const extraCurve = isIdentical && isHorizontal ? 0.3 : 0;
           
           // Create perpendicular control point
           const controlX = (from.x + to.x) / 2;
           let controlY;
           
-          if (isIdentical && isHorizontal) {
-            // For horizontal identical connections, create a strong arc
-            const yDirection = Math.random() > 0.5 ? 1 : -1; // Randomize arc direction
-            controlY = (from.y + to.y) / 2 + yDirection * Math.abs(dx) * 0.3;
-          } else if (isUpwardConnection) {
-            controlY = to.y - Math.abs(from.y - to.y) * (curveStrength + extraCurve);
+          if (isUpwardConnection) {
+            controlY = to.y - Math.abs(from.y - to.y) * curveStrength;
           } else {
-            controlY = from.y - Math.abs(from.y - to.y) * (curveStrength + extraCurve);
+            controlY = from.y - Math.abs(from.y - to.y) * curveStrength;
           }
           
           pathD = `M ${from.x},${from.y} Q ${controlX},${controlY} ${to.x},${to.y}`;
         } else {
-          // For standard downward connections (vertical hierarchy), use a simple line
+          // ORIGINAL BEHAVIOR: For standard downward connections (vertical hierarchy), use a simple line
           pathD = `M ${from.x},${from.y} L ${to.x},${to.y}`;
         }
         
@@ -121,7 +122,8 @@ const GraphConnections = ({ connections = [] }) => {
         } else if (isIdentical) {
           strokeColor = "#3B82F6"; // Blue for identical nodes
           arrowhead = "url(#identical-arrowhead)"; 
-          strokeDasharray = "2,3"; // Different dash pattern to distinguish from reasons
+          // NEW BEHAVIOR: Always use dotted lines for identical connections
+          strokeDasharray = "4,4";
         }
         
         return (
@@ -133,6 +135,7 @@ const GraphConnections = ({ connections = [] }) => {
               stroke="#111827"
               strokeWidth="3"
               strokeOpacity="0.5"
+              strokeDasharray={isIdentical ? strokeDasharray : "none"}
             />
             
             {/* Main path */}
