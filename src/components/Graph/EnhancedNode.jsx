@@ -43,7 +43,6 @@ const EnhancedNode = ({
   const isNonsense = node.nonsense;
   const identicalTo = node.identical_to;
   const isTerminal = isNonsense || identicalTo;
-  const isReason = node.node_type === 'reason';
   
   // Use a placeholder image - inline SVG data URL for universal compatibility
   const placeholderImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%239ca3af'%3EPlaceholder%3C/text%3E%3C/svg%3E";
@@ -51,7 +50,7 @@ const EnhancedNode = ({
   // Truncate content for preview
   const truncateContent = (content) => {
     if (!content) return '';
-    return content.length > 150 ? content.substring(0, 150) + '...' : content;
+    return content.length > 80 ? content.substring(0, 80) + '...' : content;
   };
   
   // Parse content with curly braces into numbered bullets
@@ -84,7 +83,6 @@ const EnhancedNode = ({
             <span>{bullet.text}</span>
           </div>
         ))}
-        {bullets.length > 0 && <span className="text-sm text-blue-600 inline-block">[more]</span>}
       </div>
     );
   };
@@ -92,8 +90,9 @@ const EnhancedNode = ({
   // Get node type colors
   const nodeColors = getNodeTypeColor(node.node_type);
 
-  // Adjust the width based on node type
-  const nodeWidth = isReason ? 'w-80' : 'w-96';
+  // Fixed width and height for all nodes
+  const nodeWidth = 'w-96';
+  const nodeHeight = 'h-48';
   
   // Highlight borders based on node type or identity
   let borderStyles = isInPath ? 'ring-2 ring-blue-600' : '';
@@ -130,7 +129,7 @@ const EnhancedNode = ({
       {/* Card styled after the visual example */}
       <div 
         className={`
-          ${nodeWidth} rounded-lg overflow-hidden shadow-lg cursor-pointer
+          ${nodeWidth} ${nodeHeight} rounded-lg overflow-hidden shadow-lg cursor-pointer
           transition-all duration-300 transform
           ${borderStyles}
           ${isInPath ? 'scale-105 shadow-xl' : 'hover:shadow-xl hover:scale-105'}
@@ -141,11 +140,11 @@ const EnhancedNode = ({
         `}
         onClick={() => onNodeClick(id)}
       >
-        <div className="flex bg-white">
-          {/* Image Column */}
+        <div className="flex h-full bg-white">
+          {/* Square Image Column */}
           <div 
             ref={circleRef} 
-            className="w-1/3 bg-gray-100 node-circle"
+            className="w-48 h-full bg-gray-100 node-circle"
           >
             <img 
               src={placeholderImage} 
@@ -155,11 +154,10 @@ const EnhancedNode = ({
           </div>
           
           {/* Content Column */}
-          <div className="w-2/3 p-4">
-            <h3 className="text-lg font-bold text-gray-800 mb-2 font-serif">
+          <div className="flex-1 p-4 overflow-hidden flex flex-col justify-between">
+            <h3 className="text-base font-bold text-gray-800 font-serif break-words">
               {node.summary || 'Untitled Node'}
             </h3>
-            {parseContent(node.content)}
             
             {/* Terminal status indicator */}
             {isTerminal && (
