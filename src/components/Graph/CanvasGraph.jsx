@@ -300,13 +300,13 @@ const CanvasGraph = ({ data }) => {
       const initialLayout = computeGraphLayout(data);
       
       // Detect and resolve any remaining collisions
-      const resolvedLayout = detectAndResolveCollisions(initialLayout, data, 650, 450);
+      //const resolvedLayout = detectAndResolveCollisions(initialLayout, data, 650, 450);
       
       // Apply additional spacing to prevent overlaps
-      const spacedLayout = addSpacingBetweenNodes(resolvedLayout, 1.2);
+     // const spacedLayout = addSpacingBetweenNodes(resolvedLayout, 1.2);
       
       // Normalize layout to fit within view
-      const { positions: normalizedLayout } = normalizeLayout(spacedLayout);
+      const { positions: normalizedLayout } = normalizeLayout(initialLayout);
       
       setNodePositions(normalizedLayout);
       setLayoutComputed(true);
@@ -643,40 +643,14 @@ const CanvasGraph = ({ data }) => {
       </div>
       
       {/* Side panel with toggle functionality */}
+      {/* Side panel with balanced heights */}
       {selectedNode && isPanelVisible && (
-        <div className="w-1/3 flex flex-col h-screen border-l border-gray-200 bg-white transition-all duration-300">
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
-            <h2 className="text-xl font-serif text-gray-800">{selectedNode.summary}</h2>
-            <div className="flex gap-2 mt-2">
-              <div className="text-xs px-2 py-1 bg-gray-200 rounded-full text-gray-700">
-                {selectedNode.node_type}
-              </div>
-              {selectedNode.nonsense && (
-                <div className="text-xs px-2 py-1 bg-red-100 rounded-full text-red-700">
-                  Nonsense
-                </div>
-              )}
-              {selectedNode.identical_to && (
-                <div className="text-xs px-2 py-1 bg-blue-100 rounded-full text-blue-700">
-                  Identical to another node
-                </div>
-              )}
-            </div>
+        <div className="w-1/3 flex flex-col h-screen border-l border-gray-200 bg-gray-50 overflow-hidden">
+          <div className="flex-1 overflow-hidden flex flex-col">
+            <ContentPanel node={selectedNode} />
           </div>
-          
-          <div className="flex-1 overflow-auto p-6">
-            <div className="prose max-w-none">
-              <ContentPanel node={selectedNode} />
-            </div>
-          </div>
-          
-          <div className="h-1/3 border-t border-gray-200 overflow-auto">
-            <div className="p-4 bg-gray-50">
-              <h3 className="text-lg font-serif text-gray-800">Ancestry Path</h3>
-            </div>
-            <div className="p-4">
-              <AncestryPanel node={selectedNode} graphData={data} />
-            </div>
+          <div className="flex-1 overflow-hidden px-4 pt-4 pb-6">
+            <AncestryPanel node={selectedNode} graphData={data} />
           </div>
         </div>
       )}
