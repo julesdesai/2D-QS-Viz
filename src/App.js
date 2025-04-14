@@ -5,6 +5,8 @@ import './styles/App.css';
 import { initializeApp } from "firebase/app";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
+import { getStorage, ref, uploadBytes, listAll, getDownloadURL } from 'firebase/storage';
+import { Upload } from 'lucide-react';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -18,6 +20,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
 
 function App() {
   const [graphs, setGraphs] = useState([]);
