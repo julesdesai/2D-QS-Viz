@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ref, uploadBytes, listAll, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../firebase';
+import { storage } from '../../firebase.js';
 
 const ContentPanel = ({ node }) => {
   const [images, setImages] = useState([]);
