@@ -16,7 +16,11 @@ const ContentPanel = ({ node }) => {
     if (!node) return;
     
     try {
-      const imagesRef = ref(storage, `nodes/${node.id}`);
+      // Use the node's unique identifier from the graph data
+      const nodeId = Object.keys(node).find(key => key !== 'content' && key !== 'summary' && key !== 'node_type');
+      if (!nodeId) return;
+
+      const imagesRef = ref(storage, `nodes/${nodeId}`);
       const result = await listAll(imagesRef);
       
       const urls = await Promise.all(
@@ -38,7 +42,11 @@ const ContentPanel = ({ node }) => {
 
     setUploading(true);
     try {
-      const storageRef = ref(storage, `nodes/${node.id}/${file.name}`);
+      // Use the node's unique identifier from the graph data
+      const nodeId = Object.keys(node).find(key => key !== 'content' && key !== 'summary' && key !== 'node_type');
+      if (!nodeId) return;
+
+      const storageRef = ref(storage, `nodes/${nodeId}/${file.name}`);
       await uploadBytes(storageRef, file);
       await loadImages(); // Reload images after upload
     } catch (error) {
