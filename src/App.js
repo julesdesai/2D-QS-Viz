@@ -2,6 +2,22 @@
 import React, { useState, useEffect } from 'react';
 import OptimizedGraph from './components/Graph/OptimizedGraph';
 import './styles/App.css';
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyB8GNZzJ1mYWaK9O87PPdruBYaFp1BDWRM",
+  authDomain: "inquiry-complex.firebaseapp.com",
+  projectId: "inquiry-complex",
+  storageBucket: "inquiry-complex.firebasestorage.app",
+  messagingSenderId: "792264989863",
+  appId: "1:792264989863:web:5496f1938fe00b6bc60f82"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
 function App() {
   const [graphs, setGraphs] = useState([]);
