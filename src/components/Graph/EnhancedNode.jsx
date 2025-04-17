@@ -54,40 +54,6 @@ const EnhancedNode = ({
     return content.length > 80 ? content.substring(0, 80) + '...' : content;
   };
   
-  // Parse content with curly braces into numbered bullets
-  const parseContent = (content) => {
-    if (!content) return null;
-    
-    // Use regex to match text inside curly braces
-    const regex = /\{([^{}]*)\}/g;
-    let match;
-    let bullets = [];
-    let count = 1;
-    
-    while ((match = regex.exec(content)) !== null) {
-      bullets.push({
-        number: count++,
-        text: match[1].trim()
-      });
-    }
-    
-    if (bullets.length === 0) {
-      // If no curly braces, return plain text
-      return <p className="text-sm text-gray-600 font-serif">{truncateContent(content)}</p>;
-    }
-    
-    return (
-      <div className="text-sm text-gray-600 font-serif space-y-1.5">
-        {bullets.map((bullet, index) => (
-          <div key={index} className="flex">
-            <span className="font-bold min-w-[20px] mr-1">{bullet.number}.</span>
-            <span>{bullet.text}</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   // Get node type colors
   const nodeColors = getNodeTypeColor(node.node_type);
 

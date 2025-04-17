@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ref, uploadBytes, listAll, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../firebase.js';
 
@@ -6,13 +6,7 @@ const ContentPanel = ({ node }) => {
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    if (node) {
-      loadImages();
-    }
-  }, [node]);
-
-  const loadImages = async () => {
+  const loadImages = useCallback(async () => {
     if (!node) return;
     
     try {
@@ -34,7 +28,13 @@ const ContentPanel = ({ node }) => {
     } catch (error) {
       console.error('Error loading images:', error);
     }
-  };
+  }, [node]);
+
+  useEffect(() => {
+    if (node) {
+      loadImages();
+    }
+  }, [node, loadImages]);
 
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
@@ -124,7 +124,7 @@ const ContentPanel = ({ node }) => {
                 <div key={index} className="relative">
                   <img
                     src={image.url}
-                    alt={`Image ${index + 1}`}
+                    alt={`Uploaded content for ${node.summary}`}
                     className="w-full h-48 object-cover rounded-lg"
                   />
                 </div>

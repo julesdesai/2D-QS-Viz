@@ -236,7 +236,7 @@ const createConnections = () => {
         console.warn("No connections created!");
       }
     };
-  }, [data, layoutComputed, nodePositions]);
+  }, [data, layoutComputed, nodePositions, createConnections]);
 
   // Handle node click
   const handleNodeClick = useCallback((nodeId) => {

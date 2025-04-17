@@ -392,9 +392,6 @@ export const normalizeLayout = (positions) => {
     maxY = Math.max(maxY, pos.y);
   });
   
-  // Calculate center of the layout for potential centering operations
-  const centerX = (minX + maxX) / 2;
-  
   // Use the center point to ensure the layout is centered properly
   const paddingX = 400; // Extra horizontal padding
   const paddingY = 500; // Extra vertical padding
