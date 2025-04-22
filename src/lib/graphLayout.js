@@ -396,6 +396,9 @@ export const normalizeLayout = (positions) => {
   const paddingX = 400; // Extra horizontal padding
   const paddingY = 500; // Extra vertical padding
   
+  // Calculate the center X coordinate
+  const centerX = (minX + maxX) / 2;
+  
   const normalized = {};
   Object.entries(positions).forEach(([id, pos]) => {
     // Adjust position relative to centerX for better horizontal centering if needed
