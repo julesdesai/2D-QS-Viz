@@ -47,7 +47,6 @@ export class CoordinateSystem {
       console.warn(`CoordinateSystem: Invalid bounds for node ${nodeId}`, bounds);
       return;
     }
-    console.log(`CoordinateSystem: Setting bounds for node ${nodeId}`, bounds);
     this.nodes.set(nodeId, bounds);
   }
 
