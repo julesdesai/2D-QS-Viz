@@ -69,6 +69,20 @@ export const getRootNodes = async (collectionName = 'nodes') => {
   return rootNodes;
 };
 
+// Get all nodes from graph collection
+export const getAllNodes = async (collectionName = 'nodes') => {
+  const q = query(collection(db, collectionName));
+  const querySnapshot = await getDocs(q);
+  const allNodes = [];
+
+  querySnapshot.forEach((doc) => {
+    allNodes.push({ id: doc.id, ...doc.data() });
+  });
+
+  return allNodes;
+};
+
+
 // Storage methods
 export const uploadImage = async (nodeId, file, collectionName = 'nodes') => {
   const fileName = `${Date.now()}-${file.name}`;
