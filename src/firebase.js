@@ -274,3 +274,13 @@ export const isNodeModifiedByUser = async (node, collectionName = 'nodes') => {
   return images.length > 0 || ratings.length > 0 || user_generated;
 };
 
+/**
+ * Get graph object to show containing all user-modified nodes and their ancestors.
+ * @param {string} collectionName - The collection name (dynamically set based on the selected graph)
+ * @returns {Promise<Object>} - The graph object.
+ */
+export const getUserModifiedGraph = async (collectionName = 'nodes') => {
+  const nodes = await getUserModifiedNodes(collectionName);
+  const ancestors = await getAncestorsUnion(nodes, collectionName);
+  return nodesToGraph(ancestors);
+};
