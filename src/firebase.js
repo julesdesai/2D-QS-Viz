@@ -83,73 +83,9 @@ export const getAllNodes = async (collectionName = 'nodes') => {
 };
 
 export const getUserModifiedNodes = async (collectionName = 'nodes') => {
-  try {
-    // Query for nodes that have ratings
-    const ratingsQuery = query(
-      collection(db, collectionName),
-      where('ratings', '!=', null)
-    );
-    
-    // Query for nodes that have images (assuming we store image count in the node document)
-    const imagesQuery = query(
-      collection(db, collectionName),
-      where('imageCount', '>', 0)
-    );
-
-    // Query for user-generated nodes
-    const userGeneratedQuery = query(
-      collection(db, collectionName),
-      where('user_generated', '==', true)
-    );
-
-    // Execute all queries in parallel
-    const [ratingsSnapshot, imagesSnapshot, userGeneratedSnapshot] = await Promise.all([
-      getDocs(ratingsQuery),
-      getDocs(imagesQuery),
-      getDocs(userGeneratedQuery)
-    ]);
-
-    // Create a Map to store unique nodes
-    const modifiedNodes = new Map();
-
-    // Process nodes with ratings
-    ratingsSnapshot.forEach((doc) => {
-      const nodeData = doc.data();
-      modifiedNodes.set(doc.id, {
-        id: doc.id,
-        ...nodeData
-      });
-    });
-
-    // Process nodes with images
-    imagesSnapshot.forEach((doc) => {
-      const nodeData = doc.data();
-      if (!modifiedNodes.has(doc.id)) {
-        modifiedNodes.set(doc.id, {
-          id: doc.id,
-          ...nodeData
-        });
-      }
-    });
-
-    // Process user-generated nodes
-    userGeneratedSnapshot.forEach((doc) => {
-      const nodeData = doc.data();
-      if (!modifiedNodes.has(doc.id)) {
-        modifiedNodes.set(doc.id, {
-          id: doc.id,
-          ...nodeData
-        });
-      }
-    });
-
-    const nodes = Array.from(modifiedNodes.values());
-    console.log(`Found ${nodes.length} user-modified nodes in ${collectionName}`);
-    return nodes;
-  } catch (error) {
-    console.error(`Error fetching user-modified nodes from ${collectionName}:`, error);
-    throw error;
-  }
+    const nodes = await getAllNodes(collectionName);
+    const modifiedNodes = nodes.filter(isNodeModifiedByUser);
+    return modifiedNodes;
 };
 
 export const nodesToGraph = async (nodes) => {
@@ -301,12 +237,14 @@ export const getNodeRatings = async (nodeId, collectionName = 'nodes') => {
   
 /**
  * Check if a node has been modified by a user.
- * @param {string} nodeId - The ID of the node to check if it has been modified by a user
+ * @param {Map} node - The node to check if it has been modified by a user
  * @param {string} collectionName - The collection name (dynamically set based on the selected graph)
  * @returns {Promise<boolean>} - True if the node has been modified by a user, false otherwise.
  */
-export const isNodeModifiedByUser = async (nodeId, collectionName = 'nodes') => {
-    var images = await getNodeImages(nodeId, collectionName);
-    var ratings = await getNodeRatings(nodeId, collectionName);
-    return images.length > 0 || ratings.length > 0;
+export const isNodeModifiedByUser = async (node, collectionName = 'nodes') => {
+    const ratings = node.ratings || [];
+    const images = await getNodeImages(node.id, collectionName);
+    var user_generated = node.user_generated || false;
+    return images.length > 0 || ratings.length > 0 || user_generated;
 };
+
