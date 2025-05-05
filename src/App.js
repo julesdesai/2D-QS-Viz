@@ -58,7 +58,7 @@ function App() {
         }
         setGraphs(graphs);
         if (graphs.length > 0) {
-          setSelectedGraph(graphs[0].filename);
+          setSelectedGraph(graphs[0].id);
         }
       } catch (err) {
         console.error('Error loading graph list:', err);
@@ -118,7 +118,7 @@ function App() {
           >
             <option value="" disabled>Select a graph...</option>
             {graphs.map((graph) => (
-              <option key={graph.id} value={graph.filename}>
+              <option key={graph.id} value={graph.id}>
                 {graph.name}
               </option>
             ))}
@@ -129,7 +129,7 @@ function App() {
               className="text-gray-600 text-sm px-1"
               style={{ fontFamily: 'Crimson Text, Georgia, serif' }}
             >
-              {graphs.find(g => g.filename === selectedGraph)?.description}
+              {graphs.find(g => g.id === selectedGraph)?.description}
             </div>
           )}
         </div>
