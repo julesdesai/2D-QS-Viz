@@ -77,8 +77,11 @@ export const getRootNodes = async (collectionName = 'nodes') => {
  */
 export const getParent = async (node, collectionName = 'nodes') => {
   const parentId = node.parent_id || null;
-  const parentNode = await getNode(parentId, collectionName);
-  return parentNode;
+  if (parentId) {
+    const parentNode = await getNode(parentId, collectionName);
+    return parentNode;
+  }
+  return null;
 };
 
 /**
