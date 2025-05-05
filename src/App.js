@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import OptimizedGraph from './components/Graph/OptimizedGraph';
 import './styles/App.css';
-import { getUserModifiedGraph } from './firebase';
+import { getUserModifiedGraph,getFullGraph } from './firebase';
 import { BookOpen } from 'lucide-react';
 
 const GRAPH_CONFIG = {
@@ -77,7 +77,7 @@ function App() {
       setLoading(true);
       try {
         console.log('Loading graph:', selectedGraph);
-        const graphResponse = await getUserModifiedGraph(selectedGraph);
+        const graphResponse = await getFullGraph(selectedGraph);
         setGraphData(graphResponse);
         setError(null);
         console.log('Successfully loaded graph data:', graphResponse);

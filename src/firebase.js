@@ -284,3 +284,13 @@ export const getUserModifiedGraph = async (collectionName = 'nodes') => {
   const ancestors = await getAncestorsUnion(nodes, collectionName);
   return nodesToGraph(ancestors);
 };
+
+/**
+ * Get graph object to show containing all nodes from a collection.
+ * @param {string} collectionName - The collection name (dynamically set based on the selected graph)
+ * @returns {Promise<Object>} - The graph object.
+ */
+export const getFullGraph = async (collectionName = 'nodes') => {
+  const nodes = await getAllNodes(collectionName);
+  return nodesToGraph(nodes);
+};
