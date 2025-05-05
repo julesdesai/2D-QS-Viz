@@ -223,28 +223,15 @@ function calculateAverageRating(ratings) {
 }
 
 /**
- * Get the ratings of a node.
- * @param {string} nodeId - The ID of the node to get ratings for
- * @param {string} collectionName - The collection name (dynamically set based on the selected graph)
- * @returns {Promise<Array>} - An array of ratings.
- */
-export const getNodeRatings = async (nodeId, collectionName = 'nodes') => {
-    const docRef = doc(db, collectionName, nodeId);
-    const docSnap = await getDoc(docRef);
-    const docData = docSnap.data();
-    return docData.ratings || [];
-};
-  
-/**
  * Check if a node has been modified by a user.
  * @param {Map} node - The node to check if it has been modified by a user
  * @param {string} collectionName - The collection name (dynamically set based on the selected graph)
  * @returns {Promise<boolean>} - True if the node has been modified by a user, false otherwise.
  */
 export const isNodeModifiedByUser = async (node, collectionName = 'nodes') => {
-    const ratings = node.ratings || [];
-    const images = await getNodeImages(node.id, collectionName);
-    var user_generated = node.user_generated || false;
-    return images.length > 0 || ratings.length > 0 || user_generated;
+  const ratings = node.ratings || [];
+  const images = await getNodeImages(node.id, collectionName);
+  var user_generated = node.user_generated || false;
+  return images.length > 0 || ratings.length > 0 || user_generated;
 };
 
