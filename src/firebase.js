@@ -18,8 +18,8 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const storage = getStorage(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 // Firestore methods with dynamic collection
 export const getNode = async (nodeId, collectionName = 'nodes') => {
