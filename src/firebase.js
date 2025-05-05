@@ -125,9 +125,69 @@ export const getAllNodes = async (collectionName = 'nodes') => {
 };
 
 export const getUserModifiedNodes = async (collectionName = 'nodes') => {
-  const nodes = await getAllNodes(collectionName);
-  const modifiedNodes = nodes.filter(isNodeModifiedByUser);
-  return modifiedNodes;
+  try {
+    // Query for nodes that have ratings, images, or are user-generated
+    const ratingsQuery = query(
+      collection(db, collectionName),
+      where('ratings', '!=', null)
+    );
+    const imagesQuery = query(
+      collection(db, collectionName),
+      where('has_image', '==', true)
+    );
+    const userGeneratedQuery = query(
+      collection(db, collectionName),
+      where('user_generated', '==', true)
+    );
+
+    // Execute all queries in parallel
+    const [ratingsSnapshot, imagesSnapshot, userGeneratedSnapshot] = await Promise.all([
+      getDocs(ratingsQuery),
+      getDocs(imagesQuery),
+      getDocs(userGeneratedQuery)
+    ]);
+
+    // Create a Map to store unique nodes
+    const modifiedNodes = new Map();
+
+    // Process nodes with ratings
+    ratingsSnapshot.forEach((doc) => {
+      const nodeData = doc.data();
+      modifiedNodes.set(doc.id, {
+        id: doc.id,
+        ...nodeData
+      });
+    });
+
+    // Process nodes with images
+    imagesSnapshot.forEach((doc) => {
+      const nodeData = doc.data();
+      if (!modifiedNodes.has(doc.id)) {
+        modifiedNodes.set(doc.id, {
+          id: doc.id,
+          ...nodeData
+        });
+      }
+    });
+
+    // Process user-generated nodes
+    userGeneratedSnapshot.forEach((doc) => {
+      const nodeData = doc.data();
+      if (!modifiedNodes.has(doc.id)) {
+        modifiedNodes.set(doc.id, {
+          id: doc.id,
+          ...nodeData
+        });
+      }
+    });
+
+    const nodes = Array.from(modifiedNodes.values());
+    console.log(`Found ${nodes.length} user-modified nodes in ${collectionName}`);
+    return nodes;
+  } catch (error) {
+    console.error(`Error fetching user-modified nodes from ${collectionName}:`, error);
+    throw error;
+  }
 };
 
 export const nodesToGraph = async (nodes) => {
