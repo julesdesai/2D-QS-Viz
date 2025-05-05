@@ -57,9 +57,16 @@ const EnhancedNode = ({
   // Get node type colors
   const nodeColors = getNodeTypeColor(node.node_type);
 
-  // Fixed width and height for all nodes
-  const nodeWidth = 'w-96';
-  const nodeHeight = 'h-48';
+  // Compute scaling factor from averageRating
+  const avg = typeof node.averageRating === 'number' ? node.averageRating : 50;
+  const scale = 1 + 0.5 * (avg - 50) / 50;
+
+  // Base size in px
+  const baseWidth = 384; // w-96 = 24rem = 384px
+  const baseHeight = 192; // h-48 = 12rem = 192px
+
+  const nodeWidthPx = baseWidth * scale;
+  const nodeHeightPx = baseHeight * scale;
   
   // Highlight borders based on node type or identity
   let borderStyles = isInPath ? 'ring-2 ring-blue-600' : '';
@@ -92,11 +99,12 @@ const EnhancedNode = ({
       className={`
         ${isInPath ? 'z-10' : 'z-0'}
       `}
+      style={{ width: nodeWidthPx, height: nodeHeightPx, position: 'relative' }}
     >
       {/* Card styled after the visual example */}
       <div 
         className={`
-          ${nodeWidth} ${nodeHeight} rounded-lg overflow-hidden shadow-lg cursor-pointer
+          rounded-lg overflow-hidden shadow-lg cursor-pointer
           transition-all duration-300 transform
           ${borderStyles}
           ${isInPath ? 'scale-105 shadow-xl' : 'hover:shadow-xl hover:scale-105'}
@@ -106,6 +114,7 @@ const EnhancedNode = ({
           border-2
         `}
         onClick={() => onNodeClick(id)}
+        style={{ width: '100%', height: '100%' }}
       >
         <div className="flex h-full bg-white">
           {/* Square Image Column */}
