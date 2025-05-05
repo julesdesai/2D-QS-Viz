@@ -78,9 +78,10 @@ function App() {
       try {
         console.log('Loading graph:', selectedGraph);
         const graphResponse = await getUserModifiedGraph(selectedGraph);
+        console.log('Successfully downloaded graph data:', graphResponse);
         setGraphData(graphResponse);
+        console.log('Successfully set graph data');
         setError(null);
-        console.log('Successfully loaded graph data:', graphResponse);
       } catch (err) {
         console.error('Error loading graph data:', err);
         setError(`Failed to load graph data. Error: ${err.message}`);
