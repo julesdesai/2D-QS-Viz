@@ -129,6 +129,7 @@ export const getUserModifiedNodes = async (collectionName = 'nodes') => {
 
 export const nodesToGraph = async (nodes) => {
   const entries = nodes.map((node) => [node.id, node]);
+  console.log("[nodesToGraph] Building graph of size: ", entries.length);
   return Object.fromEntries(entries);
 };
 
