@@ -129,7 +129,7 @@ export const getUserModifiedNodes = async (collectionName = 'nodes') => {
     // Query for nodes that have ratings, images, or are user-generated
     const ratingsQuery = query(
       collection(db, collectionName),
-      where('ratings', '!=', null)
+      where('humanRatings', '!=', null)
     );
     const imagesQuery = query(
       collection(db, collectionName),
