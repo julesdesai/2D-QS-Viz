@@ -134,33 +134,7 @@ const calculateTreeSizes = (node, data) => {
 const positionNodesRecursive = (node, positions, data, x, y, level = 0) => {
   if (!node) return;
   
-  // Skip question node (root)
-  if (level === 0) {
-    // Just process children of root
-    const children = node.children;
-    
-    if (children.length > 0) {
-      // Calculate total width of all children
-      const totalChildrenWidth = children.reduce((sum, child) => sum + child.width, 0);
-      const startX = x - (totalChildrenWidth * CONSTANTS.HORIZONTAL_GAP / 2) + (CONSTANTS.HORIZONTAL_GAP / 2);
-      
-      // Position each child
-      let currentX = startX;
-      for (let i = 0; i < children.length; i++) {
-        const childNode = children[i];
-        const childWidth = childNode.width;
-        const childCenterX = currentX + (childWidth * CONSTANTS.HORIZONTAL_GAP / 2);
-        
-        positionNodesRecursive(childNode, positions, data, childCenterX, y + CONSTANTS.VERTICAL_GAP, level + 1);
-        
-        currentX += childWidth * CONSTANTS.HORIZONTAL_GAP;
-      }
-    }
-    
-    return;
-  }
-  
-  // Position this node
+  // Position this node (including root)
   positions[node.id] = { x, y };
   
   // Position reasons directly above this node
@@ -168,30 +142,22 @@ const positionNodesRecursive = (node, positions, data, x, y, level = 0) => {
     positionReasonsAbove(node.reasons, node.id, positions);
   }
   
-  // Position children below, with parent centered above children
+  // Process children
   const children = node.children;
   if (children.length > 0) {
-    // Next level's y position
-    const childrenY = y + CONSTANTS.VERTICAL_GAP;
-    
     // Calculate total width of all children
-    const totalWidth = children.reduce((sum, child) => sum + child.width, 0);
-    
-    // Calculate the start X position to center children under parent
-    // This is the key improvement for centering
-    const startX = x - (totalWidth * CONSTANTS.HORIZONTAL_GAP / 2) + (CONSTANTS.HORIZONTAL_GAP / 2);
+    const totalChildrenWidth = children.reduce((sum, child) => sum + child.width, 0);
+    const startX = x - (totalChildrenWidth * CONSTANTS.HORIZONTAL_GAP / 2) + (CONSTANTS.HORIZONTAL_GAP / 2);
     
     // Position each child
     let currentX = startX;
     for (let i = 0; i < children.length; i++) {
       const childNode = children[i];
       const childWidth = childNode.width;
-      
-      // Position child at the center of its allocated space
       const childCenterX = currentX + (childWidth * CONSTANTS.HORIZONTAL_GAP / 2);
-      positionNodesRecursive(childNode, positions, data, childCenterX, childrenY, level + 1);
       
-      // Move to next position
+      positionNodesRecursive(childNode, positions, data, childCenterX, y + CONSTANTS.VERTICAL_GAP, level + 1);
+      
       currentX += childWidth * CONSTANTS.HORIZONTAL_GAP;
     }
   }
