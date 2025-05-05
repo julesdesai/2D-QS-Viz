@@ -82,6 +82,81 @@ export const getAllNodes = async (collectionName = 'nodes') => {
   return allNodes;
 };
 
+export const getUserModifiedNodes = async (collectionName = 'nodes') => {
+  try {
+    // Query for nodes that have ratings
+    const ratingsQuery = query(
+      collection(db, collectionName),
+      where('ratings', '!=', null)
+    );
+    
+    // Query for nodes that have images (assuming we store image count in the node document)
+    const imagesQuery = query(
+      collection(db, collectionName),
+      where('imageCount', '>', 0)
+    );
+
+    // Query for user-generated nodes
+    const userGeneratedQuery = query(
+      collection(db, collectionName),
+      where('user_generated', '==', true)
+    );
+
+    // Execute all queries in parallel
+    const [ratingsSnapshot, imagesSnapshot, userGeneratedSnapshot] = await Promise.all([
+      getDocs(ratingsQuery),
+      getDocs(imagesQuery),
+      getDocs(userGeneratedQuery)
+    ]);
+
+    // Create a Map to store unique nodes
+    const modifiedNodes = new Map();
+
+    // Process nodes with ratings
+    ratingsSnapshot.forEach((doc) => {
+      const nodeData = doc.data();
+      modifiedNodes.set(doc.id, {
+        id: doc.id,
+        ...nodeData
+      });
+    });
+
+    // Process nodes with images
+    imagesSnapshot.forEach((doc) => {
+      const nodeData = doc.data();
+      if (!modifiedNodes.has(doc.id)) {
+        modifiedNodes.set(doc.id, {
+          id: doc.id,
+          ...nodeData
+        });
+      }
+    });
+
+    // Process user-generated nodes
+    userGeneratedSnapshot.forEach((doc) => {
+      const nodeData = doc.data();
+      if (!modifiedNodes.has(doc.id)) {
+        modifiedNodes.set(doc.id, {
+          id: doc.id,
+          ...nodeData
+        });
+      }
+    });
+
+    const nodes = Array.from(modifiedNodes.values());
+    console.log(`Found ${nodes.length} user-modified nodes in ${collectionName}`);
+    return nodes;
+  } catch (error) {
+    console.error(`Error fetching user-modified nodes from ${collectionName}:`, error);
+    throw error;
+  }
+};
+
+export const nodesToGraph = async (nodes) => {
+  const entries = map(nodes, (node) => [node.id, node]);
+  return Object.fromEntries(entries);
+};
+
 
 // Storage methods
 export const uploadImage = async (nodeId, file, collectionName = 'nodes') => {
