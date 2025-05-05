@@ -58,7 +58,7 @@ function App() {
         }
         setGraphs(graphs);
         if (graphs.length > 0) {
-          setSelectedGraph(graphs[0].id);
+          setSelectedGraph(graphs[3].id);
         }
       } catch (err) {
         console.error('Error loading graph list:', err);
@@ -77,7 +77,7 @@ function App() {
       setLoading(true);
       try {
         console.log('Loading graph:', selectedGraph);
-        const graphResponse = await getFullGraph(selectedGraph);
+        const graphResponse = await getUserModifiedGraph(selectedGraph);
         setGraphData(graphResponse);
         setError(null);
         console.log('Successfully loaded graph data:', graphResponse);
