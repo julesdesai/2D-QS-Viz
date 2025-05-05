@@ -77,7 +77,7 @@ const EnhancedNode = ({
 
   // Compute scaling factor from averageRating
   const avg = typeof node.averageRating === 'number' ? node.averageRating : 50;
-  const scale = 1 + 0.5 * (avg - 50) / 50;
+  const scale = 1 + 0.75 * (avg - 50) / 50;
 
   // Base size in px
   const baseWidth = 384; // w-96 = 24rem = 384px
