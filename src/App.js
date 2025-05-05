@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import OptimizedGraph from './components/Graph/OptimizedGraph';
 import './styles/App.css';
-import { db } from './firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { getUserModifiedGraph } from './firebase';
 import { BookOpen } from 'lucide-react';
 
 const GRAPH_CONFIG = {
