@@ -69,6 +69,45 @@ export const getRootNodes = async (collectionName = 'nodes') => {
   return rootNodes;
 };
 
+/**
+ * Get the parent of a node.
+ * @param {Object} node - The node to get parent for
+ * @param {string} collectionName - The collection name (dynamically set based on the selected graph)
+ * @returns {Promise<Object>} - The parent node.  
+ */
+export const getParent = async (node, collectionName = 'nodes') => {
+  const parentId = node.parent_id || null;
+  const parentNode = await getNode(parentId, collectionName);
+  return parentNode;
+};
+
+/**
+ * Get the ancestors of a node.
+ * @param {Object} node - The node to get ancestors for
+ * @param {string} collectionName - The collection name (dynamically set based on the selected graph)
+ * @returns {Promise<Array>} - An array of ancestors.
+ */
+export const getAncestors = async (node, collectionName = 'nodes') => {
+  const parent = await getParent(node, collectionName);
+  if (parent) {
+    const ancestors = [parent];
+    const parentAncestors = await getAncestors(parent, collectionName);
+    return [...ancestors, ...parentAncestors];
+  }
+  return [];
+};
+
+/**
+ * Get union of ancestors from a list of nodes.
+ * @param {Array} nodes - The list of nodes to get ancestor lineages for
+ * @param {string} collectionName - The collection name (dynamically set based on the selected graph)
+ * @returns {Promise<Array>} - An array of unique ancestors.
+ */
+export const getAncestorsUnion = async (nodes, collectionName = 'nodes') => {
+  const ancestors = await Promise.all(nodes.map(node => getAncestors(node, collectionName)));
+  return [...new Set(ancestors.flat())];
+};
+
 // Get all nodes from graph collection
 export const getAllNodes = async (collectionName = 'nodes') => {
   const q = query(collection(db, collectionName));
@@ -83,9 +122,9 @@ export const getAllNodes = async (collectionName = 'nodes') => {
 };
 
 export const getUserModifiedNodes = async (collectionName = 'nodes') => {
-    const nodes = await getAllNodes(collectionName);
-    const modifiedNodes = nodes.filter(isNodeModifiedByUser);
-    return modifiedNodes;
+  const nodes = await getAllNodes(collectionName);
+  const modifiedNodes = nodes.filter(isNodeModifiedByUser);
+  return modifiedNodes;
 };
 
 export const nodesToGraph = async (nodes) => {
