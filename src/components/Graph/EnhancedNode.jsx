@@ -1,5 +1,6 @@
 // src/components/Graph/EnhancedNode.jsx
 import React, { useEffect, useRef, useState } from 'react';
+import { getNodeImages } from '../../firebase';
 
 const getNodeTypeColor = (nodeType) => {
   switch (nodeType?.toLowerCase()) {
