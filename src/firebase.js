@@ -93,9 +93,8 @@ export const getParent = async (node, collectionName = 'nodes') => {
 export const getAncestors = async (node, collectionName = 'nodes') => {
   const parent = await getParent(node, collectionName);
   if (parent) {
-    const ancestors = [parent];
-    const parentAncestors = await getAncestors(parent, collectionName);
-    return [...ancestors, ...parentAncestors];
+    const ancestors = await getAncestors(parent, collectionName);
+    return [parent, ...ancestors];
   }
   return [];
 };
@@ -346,7 +345,7 @@ export const isNodeModifiedByUser = async (node, collectionName = 'nodes') => {
 export const getUserModifiedGraph = async (collectionName = 'nodes') => {
   const nodes = await getUserModifiedNodes(collectionName);
   const ancestors = await getAncestorsUnion(nodes, collectionName);
-  return nodesToGraph(ancestors);
+  return nodesToGraph([...nodes, ...ancestors]);
 };
 
 /**
