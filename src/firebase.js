@@ -128,7 +128,7 @@ export const getUserModifiedNodes = async (collectionName = 'nodes') => {
 };
 
 export const nodesToGraph = async (nodes) => {
-  const entries = map(nodes, (node) => [node.id, node]);
+  const entries = nodes.map((node) => [node.id, node]);
   return Object.fromEntries(entries);
 };
 
