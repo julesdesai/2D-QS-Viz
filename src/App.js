@@ -5,6 +5,7 @@ import './styles/App.css';
 import { initializeApp } from "firebase/app";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
+import { getUserModifiedGraph } from './firebase';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -60,19 +61,19 @@ function App() {
   useEffect(() => {
     const loadGraphs = async () => {
       try {
-        console.log('Loading from base URL:', baseUrl);
-        const manifestResponse = await fetch(`${baseUrl}/graphs/graph-manifest.json`);
-        
-        if (!manifestResponse.ok) {
-          throw new Error(`Manifest HTTP error! status: ${manifestResponse.status}`);
+        let graphs = [];
+        // Populate graphs from GRAPH_CONFIG:
+        for (const [key, value] of Object.entries(GRAPH_CONFIG)) {
+          graphs.push({
+            id: key,
+            name: value.name,
+            description: value.description,
+            filename: null
+          });
         }
-
-        const manifestData = await manifestResponse.json();
-        console.log('Loaded manifest:', manifestData);
-
-        setGraphs(manifestData.graphs);
-        if (manifestData.graphs.length > 0) {
-          setSelectedGraph(manifestData.graphs[0].filename);
+        setGraphs(graphs);
+        if (graphs.length > 0) {
+          setSelectedGraph(graphs[0].filename);
         }
       } catch (err) {
         console.error('Error loading graph list:', err);
@@ -91,17 +92,10 @@ function App() {
       setLoading(true);
       try {
         console.log('Loading graph:', selectedGraph);
-        const graphResponse = await fetch(`${baseUrl}/graphs/${selectedGraph}`);
-        
-        if (!graphResponse.ok) {
-          throw new Error(`Graph data HTTP error! status: ${graphResponse.status}`);
-        }
-
-        const data = await graphResponse.json();
-        console.log('Successfully loaded graph data:', data);
-        
-        setGraphData(data);
+        const graphResponse = await getUserModifiedGraph(selectedGraph);
+        setGraphData(graphResponse);
         setError(null);
+        console.log('Successfully loaded graph data:', graphResponse);
       } catch (err) {
         console.error('Error loading graph data:', err);
         setError(`Failed to load graph data. Error: ${err.message}`);
