@@ -2,19 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import OptimizedGraph from './components/Graph/OptimizedGraph';
 import './styles/App.css';
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyB8GNZzJ1mYWaK9O87PPdruBYaFp1BDWRM",
-  authDomain: "inquiry-complex.firebaseapp.com",
-  projectId: "inquiry-complex",
-  storageBucket: "inquiry-complex.firebasestorage.app",
-  messagingSenderId: "792264989863",
-  appId: "1:792264989863:web:5496f1938fe00b6bc60f82"
-};
+import { db } from './firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { BookOpen } from 'lucide-react';
 
 const GRAPH_CONFIG = {
   'knowledge': {
@@ -43,45 +33,11 @@ const GRAPH_CONFIG = {
   }
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
 function App() {
-  const [graphs, setGraphs] = useState([]);
-  const [selectedGraph, setSelectedGraph] = useState(null);
+  const [selectedGraph, setSelectedGraph] = useState(Object.keys(GRAPH_CONFIG)[0]);
   const [graphData, setGraphData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // Get the base URL dynamically
-  const baseUrl = process.env.PUBLIC_URL || '/3D-Question-Space-Visualiser';
-
-  // Load list of available graphs
-  useEffect(() => {
-    const loadGraphs = async () => {
-      try {
-        console.log('Loading from base URL:', baseUrl);
-        const manifestResponse = await fetch(`${baseUrl}/graphs/graph-manifest.json`);
-        
-        if (!manifestResponse.ok) {
-          throw new Error(`Manifest HTTP error! status: ${manifestResponse.status}`);
-        }
-
-        const manifestData = await manifestResponse.json();
-        console.log('Loaded manifest:', manifestData);
-
-        setGraphs(manifestData.graphs);
-        if (manifestData.graphs.length > 0) {
-          setSelectedGraph(manifestData.graphs[0].filename);
-        }
-      } catch (err) {
-        console.error('Error loading graph list:', err);
-        setError(`Failed to load graph list. Error: ${err.message}`);
-      }
-    };
-
-    loadGraphs();
-  }, [baseUrl]);
 
   // Load selected graph data
   useEffect(() => {
@@ -91,13 +47,14 @@ function App() {
       setLoading(true);
       try {
         console.log('Loading graph:', selectedGraph);
-        const graphResponse = await fetch(`${baseUrl}/graphs/${selectedGraph}`);
+        const graphDoc = doc(db, 'graphs', GRAPH_CONFIG[selectedGraph].rootNode);
+        const graphSnapshot = await getDoc(graphDoc);
         
-        if (!graphResponse.ok) {
-          throw new Error(`Graph data HTTP error! status: ${graphResponse.status}`);
+        if (!graphSnapshot.exists()) {
+          throw new Error('Graph document not found');
         }
 
-        const data = await graphResponse.json();
+        const data = graphSnapshot.data();
         console.log('Successfully loaded graph data:', data);
         
         setGraphData(data);
@@ -111,7 +68,7 @@ function App() {
     };
 
     loadGraphData();
-  }, [selectedGraph, baseUrl]);
+  }, [selectedGraph]);
 
   if (error) {
     return (
@@ -138,9 +95,9 @@ function App() {
             style={{ fontFamily: 'Crimson Text, Georgia, serif' }}
           >
             <option value="" disabled>Select a graph...</option>
-            {graphs.map((graph) => (
-              <option key={graph.id} value={graph.filename}>
-                {graph.name}
+            {Object.entries(GRAPH_CONFIG).map(([id, config]) => (
+              <option key={id} value={id}>
+                {config.name}
               </option>
             ))}
           </select>
@@ -150,7 +107,7 @@ function App() {
               className="text-gray-600 text-sm px-1"
               style={{ fontFamily: 'Crimson Text, Georgia, serif' }}
             >
-              {graphs.find(g => g.filename === selectedGraph)?.description}
+              {GRAPH_CONFIG[selectedGraph].description}
             </div>
           )}
         </div>
