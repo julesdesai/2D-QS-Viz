@@ -6,6 +6,7 @@ import ContentPanel from '../UI/ContentPanel';
 import AncestryPanel from '../UI/AncestryPanel';
 import { useCoordinateSystem } from '../../hooks/useCoordinateSystem';
 import { Vector2D, NodeBounds } from '../../lib/CoordinateSystem';
+import { getUserModifiedGraph } from '../../firebase';
 import { 
   computeGraphLayout, 
   detectAndResolveCollisions, 
@@ -13,13 +14,15 @@ import {
   addSpacingBetweenNodes 
 } from '../../lib/graphLayout';
 
-const OptimizedGraph = ({ data }) => {
+const OptimizedGraph = ({ data: initialData }) => {
   const [activePath, setActivePath] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
   const [connections, setConnections] = useState([]);
   const [nodePositions, setNodePositions] = useState({});
   const [layoutComputed, setLayoutComputed] = useState(false);
   const [isPanelVisible, setIsPanelVisible] = useState(true);
+  const [isLiveRefresh, setIsLiveRefresh] = useState(false);
+  const [data, setData] = useState(initialData);
   
   const containerRef = useRef(null);
   const [containerOffset, setContainerOffset] = useState({ x: 0, y: 0 });
@@ -30,6 +33,8 @@ const OptimizedGraph = ({ data }) => {
   // Store node DOM elements by ID
   const nodeRefs = useRef({});
   const circleRefs = useRef({});
+  const lastViewportRef = useRef({ offset: { x: 0, y: 0 }, scale: 0.7 });
+  const selectedGraphRef = useRef(null);
 
   // Initialize coordinate system
   const {
@@ -259,7 +264,7 @@ const createConnections = () => {
     }
   }, []);
 
-  // Compute optimal layout for the graph
+  // Compute layout when data changes
   useEffect(() => {
     if (!data || Object.keys(data).length === 0) return;
     
@@ -277,7 +282,25 @@ const createConnections = () => {
       // Normalize layout to fit within view
       const { positions: normalizedLayout } = normalizeLayout(spacedLayout);
       
-      setNodePositions(normalizedLayout);
+      // If we're in live refresh mode, try to maintain node positions as much as possible
+      if (isLiveRefresh && Object.keys(nodePositions).length > 0) {
+        // For each node in the new layout, try to find a similar position in the old layout
+        const adjustedLayout = { ...normalizedLayout };
+        Object.entries(normalizedLayout).forEach(([nodeId, newPos]) => {
+          if (nodePositions[nodeId]) {
+            // If the node existed before, try to keep it close to its old position
+            const oldPos = nodePositions[nodeId];
+            adjustedLayout[nodeId] = {
+              x: oldPos.x + (newPos.x - oldPos.x) * 0.3, // Blend old and new positions
+              y: oldPos.y + (newPos.y - oldPos.y) * 0.3
+            };
+          }
+        });
+        setNodePositions(adjustedLayout);
+      } else {
+        setNodePositions(normalizedLayout);
+      }
+      
       setLayoutComputed(true);
       
       // Find and select question node (but don't display it)
@@ -288,7 +311,7 @@ const createConnections = () => {
     } catch (err) {
       console.error('Error computing layout:', err);
     }
-  }, [data, selectedNode, handleNodeClick]);
+  }, [data, selectedNode, handleNodeClick, isLiveRefresh, nodePositions]);
 
   // Update node references for position tracking
   const handleNodeRef = useCallback((id, element) => {
@@ -452,6 +475,61 @@ const createConnections = () => {
     };
   }, [handleMouseMove]);
 
+  // Store current viewport state before updates
+  useEffect(() => {
+    if (!isDragging) {
+      lastViewportRef.current = {
+        offset: { ...containerOffset },
+        scale
+      };
+    }
+  }, [containerOffset, scale, isDragging]);
+
+  // Live refresh polling
+  useEffect(() => {
+    let intervalId;
+    
+    if (isLiveRefresh && selectedGraphRef.current) {
+      intervalId = setInterval(async () => {
+        try {
+          // Fetch new data
+          const newData = await getUserModifiedGraph(selectedGraphRef.current);
+          
+          // Only update if data has changed
+          if (JSON.stringify(newData) !== JSON.stringify(data)) {
+            // Store current viewport state
+            const currentViewport = lastViewportRef.current;
+            
+            // Update data while preserving viewport
+            setData(newData);
+            setContainerOffset(currentViewport.offset);
+            setScale(currentViewport.scale);
+            setLayoutComputed(false); // Force layout recomputation
+          }
+        } catch (error) {
+          console.error('Error in live refresh:', error);
+        }
+      }, 5000); // Poll every 5 seconds
+    }
+    
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isLiveRefresh, data]);
+
+  // Update selectedGraphRef when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      // Find the graph ID by looking for a node with parent_id === null
+      const rootNode = Object.entries(initialData).find(([_, node]) => node.parent_id === null);
+      if (rootNode) {
+        selectedGraphRef.current = rootNode[0];
+      }
+    }
+  }, [initialData]);
+
   return (
     <div className="h-screen w-full flex bg-white">
       <div className="relative flex-1 overflow-hidden">
@@ -553,6 +631,18 @@ const createConnections = () => {
               >
                 Reset
               </button>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <input
+                type="checkbox"
+                id="liveRefresh"
+                checked={isLiveRefresh}
+                onChange={(e) => setIsLiveRefresh(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="liveRefresh" className="text-sm text-gray-700">
+                Live refresh
+              </label>
             </div>
           </div>
         </div>
