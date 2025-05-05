@@ -1,5 +1,5 @@
 // src/components/Graph/EnhancedNode.jsx
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const getNodeTypeColor = (nodeType) => {
   switch (nodeType?.toLowerCase()) {
@@ -23,6 +23,24 @@ const EnhancedNode = ({
   const nodeRef = useRef(null);
   const circleRef = useRef(null);
   const node = data[id];
+  const [nodeImage, setNodeImage] = useState(null);
+  
+  // Load node image if has_image is true
+  useEffect(() => {
+    const loadNodeImage = async () => {
+      if (node?.has_image) {
+        try {
+          const images = await getNodeImages(node.id);
+          if (images.length > 0) {
+            setNodeImage(images[0].url);
+          }
+        } catch (error) {
+          console.error('Error loading node image:', error);
+        }
+      }
+    };
+    loadNodeImage();
+  }, [node]);
   
   // Handle node references for positioning
   useEffect(() => {
@@ -44,9 +62,8 @@ const EnhancedNode = ({
   const identicalTo = node.identical_to;
   const isTerminal = isNonsense || identicalTo;
   
-  // Use a custom thumbnail image
-  // For GitHub Pages, use a relative path from the root of your deployed site
-  const thumbnailImage = process.env.PUBLIC_URL + "/assets/images/node-thumbnail.png"; // Update this path to match your repository structure
+  // Use node-specific image if available, otherwise use default thumbnail
+  const thumbnailImage = nodeImage || process.env.PUBLIC_URL + "/assets/images/node-thumbnail.png";
   
   // Truncate content for preview
   const truncateContent = (content) => {

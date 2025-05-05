@@ -36,15 +36,34 @@ const CanvasNode = memo(({
     
     setImageLoaded(true);
     
-    // Path to the image
-    const thumbnailPath = process.env.PUBLIC_URL + "/assets/images/node-thumbnail.png";
+    const loadImage = async () => {
+      try {
+        if (node?.has_image) {
+          const images = await getNodeImages(node.id);
+          if (images.length > 0) {
+            const img = new window.Image();
+            img.src = images[0].url;
+            img.onload = () => setImage(img);
+            return;
+          }
+        }
+        else {
+          // Fallback to default thumbnail
+          const img = new window.Image();
+          img.src = process.env.PUBLIC_URL + "/assets/images/node-thumbnail.png";
+          img.onload = () => setImage(img);
+        }
+      } catch (error) {
+        console.error('Error loading node image:', error);
+        // Fallback to default thumbnail on error
+        const img = new window.Image();
+        img.src = process.env.PUBLIC_URL + "/assets/images/node-thumbnail.png";
+        img.onload = () => setImage(img);
+      }
+    };
     
-    const img = new window.Image();
-    img.src = thumbnailPath;
-    img.onload = () => setImage(img);
-    
-    // No need to handle error - just don't show image if it fails
-  }, [imageLoaded]);
+    loadImage();
+  }, [imageLoaded, node]);
 
   if (!node) return null;
 
