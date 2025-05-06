@@ -214,6 +214,12 @@ const createConnections = () => {
 
   // Function to update connections - using useRef for stable reference
   const updateConnectionsRef = useRef(() => {
+    console.log("Updating connections with:", {
+      hasData: !!data,
+      layoutComputed,
+      numPositions: nodePositions ? Object.keys(nodePositions).length : 0
+    });
+    
     const newConnections = createConnections();
     setConnections(newConnections);
   });
@@ -221,9 +227,18 @@ const createConnections = () => {
   // Make sure updateConnectionsRef.current uses the latest state/props
   useEffect(() => {
     updateConnectionsRef.current = () => {
+      console.log("Updating connections with latest state:", {
+        hasData: !!data,
+        layoutComputed,
+        numPositions: nodePositions ? Object.keys(nodePositions).length : 0 
+      });
+      
       const newConnections = createConnections();
       if (newConnections.length > 0) {
+        console.log(`Setting ${newConnections.length} connections`);
         setConnections(newConnections);
+      } else {
+        console.warn("No connections created!");
       }
     };
   }, [data, layoutComputed, nodePositions, createConnections]);
@@ -257,20 +272,29 @@ const createConnections = () => {
       console.log('Starting live refresh polling...');
       intervalId = setInterval(async () => {
         try {
+          console.log('Live refresh: Fetching new data...');
           // Fetch new data
           const newData = await getUserModifiedGraph(selectedGraphRef.current);
+          console.log('Live refresh: Received new data:', {
+            nodeCount: Object.keys(newData).length,
+            currentDataCount: Object.keys(data).length
+          });
           
           // Only update if data has changed
           if (JSON.stringify(newData) !== JSON.stringify(data)) {
-            console.log('Live refresh: Data has changed, updating graph...');
+            console.log('Live refresh: Data has changed, updating...');
             // Store current viewport state
             const currentViewport = lastViewportRef.current;
+            console.log('Live refresh: Current viewport state:', currentViewport);
             
             // Update data while preserving viewport
             setData(newData);
             setContainerOffset(currentViewport.offset);
             setScale(currentViewport.scale);
             setLayoutComputed(false); // Force layout recomputation
+            console.log('Live refresh: State updates queued');
+          } else {
+            console.log('Live refresh: No data changes detected');
           }
         } catch (error) {
           console.error('Error in live refresh:', error);
@@ -280,7 +304,7 @@ const createConnections = () => {
     
     return () => {
       if (intervalId) {
-        console.log('Stopping live refresh polling');
+        console.log('Cleaning up live refresh interval');
         clearInterval(intervalId);
       }
     };
@@ -288,24 +312,41 @@ const createConnections = () => {
 
   // Compute layout when data changes
   useEffect(() => {
-    if (!data || Object.keys(data).length === 0) return;
+    if (!data || Object.keys(data).length === 0) {
+      console.log('Layout computation skipped: No data available');
+      return;
+    }
     
-    console.log('Computing new graph layout...');
+    console.log('Computing optimal graph layout...', {
+      dataNodeCount: Object.keys(data).length,
+      currentLayoutComputed: layoutComputed,
+      isLiveRefresh
+    });
+    
     try {
       // Compute layout using the parent-centered approach that stacks reasons directly above parents
       const initialLayout = computeGraphLayout(data);
+      console.log('Initial layout computed:', {
+        nodeCount: Object.keys(initialLayout).length
+      });
       
       // Detect and resolve any remaining collisions
       const resolvedLayout = detectAndResolveCollisions(initialLayout, data, 650, 450);
+      console.log('Collisions resolved');
       
       // Apply additional spacing to prevent overlaps
       const spacedLayout = addSpacingBetweenNodes(resolvedLayout, 1.2);
+      console.log('Spacing applied');
       
       // Normalize layout to fit within view
       const { positions: normalizedLayout } = normalizeLayout(spacedLayout);
+      console.log('Layout normalized:', {
+        nodeCount: Object.keys(normalizedLayout).length
+      });
       
       // If we're in live refresh mode, try to maintain node positions as much as possible
       if (isLiveRefresh && Object.keys(nodePositions).length > 0) {
+        console.log('Live refresh: Adjusting layout to maintain positions');
         // For each node in the new layout, try to find a similar position in the old layout
         const adjustedLayout = { ...normalizedLayout };
         Object.entries(normalizedLayout).forEach(([nodeId, newPos]) => {
@@ -318,16 +359,24 @@ const createConnections = () => {
             };
           }
         });
+        console.log('Live refresh: Layout adjusted', {
+          adjustedNodeCount: Object.keys(adjustedLayout).length
+        });
         setNodePositions(adjustedLayout);
       } else {
+        console.log('Setting new node positions:', {
+          nodeCount: Object.keys(normalizedLayout).length
+        });
         setNodePositions(normalizedLayout);
       }
       
       setLayoutComputed(true);
+      console.log('Layout computation complete');
       
       // Find and select question node (but don't display it)
       const questionNode = Object.entries(data).find(([_, node]) => node.node_type === 'question');
       if (questionNode && !selectedNode) {
+        console.log('Selecting question node:', questionNode[0]);
         handleNodeClick(questionNode[0]);
       }
     } catch (err) {
@@ -521,14 +570,29 @@ const createConnections = () => {
   // Add debug logging for node rendering
   const renderNodes = () => {
     if (!layoutComputed || !nodePositions) {
+      console.log('Skipping node render:', {
+        layoutComputed,
+        hasNodePositions: !!nodePositions
+      });
       return null;
     }
+
+    console.log('Rendering nodes:', {
+      nodePositionCount: Object.keys(nodePositions).length,
+      dataNodeCount: Object.keys(data).length
+    });
 
     return Object.entries(nodePositions).map(([nodeId, position]) => {
       // Skip the question node
       if (data[nodeId]?.node_type === 'question') {
         return null;
       }
+      
+      console.log('Rendering node:', {
+        nodeId,
+        position,
+        hasData: !!data[nodeId]
+      });
       
       return (
         <div
