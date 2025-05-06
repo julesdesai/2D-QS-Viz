@@ -9,26 +9,32 @@ const GRAPH_CONFIG = {
   'knowledge': {
     name: 'What is Knowledge?',
     description: 'The Socratic Question',
-    icon: <BookOpen className="w-6 h-6" />,
-    rootNode: '004d648a-1557-4549-8b22-fd1ae43fcd33'
+    icon: <BookOpen className="w-6 h-6" />
   },
   'freedom': {
     name: 'What is Freedom (in the sense of Liberty)?',
     description: 'Philosophical perspectives on freedom and liberty',
-    icon: <BookOpen className="w-6 h-6" />,
-    rootNode: 'a5e92802-75b0-4c29-ad4f-f07d15889d15'
+    icon: <BookOpen className="w-6 h-6" />
+  },
+  'human_flourishing': {
+    name: 'What is Human Flourishing?',
+    description: 'Philosophical perspectives on human flourishing',
+    icon: <BookOpen className="w-6 h-6" />
+  },
+  'AGI': {
+    name: 'What is the right definition of AGI (artificial general intelligence)?',
+    description: 'Philosophical perspectives on AGI',
+    icon: <BookOpen className="w-6 h-6" />
   },
   'reasons': {
     name: 'What are Reasons?',
     description: 'Philosophical perspectives on reasons',
-    icon: <BookOpen className="w-6 h-6" />,
-    rootNode: 'afb54e2d-3b82-464a-80d1-f766da42395b'
+    icon: <BookOpen className="w-6 h-6" />
   },
   'semantics': {
     name: 'What is Semantics?',
     description: 'Philosophical perspectives on semantics',
-    icon: <BookOpen className="w-6 h-6" />,
-    rootNode: '069e0a67-8365-46b0-a5db-6c8013f18563'
+    icon: <BookOpen className="w-6 h-6" />
   }
 };
 
