@@ -92,7 +92,6 @@ const GraphConnections = ({ connections = [] }) => {
           const curveStrength = 0.2;
           const dx = to.x - from.x;
           const dy = to.y - from.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
           
           // Create perpendicular control point
           const controlX = (from.x + to.x) / 2;

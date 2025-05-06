@@ -2,6 +2,35 @@
 import React, { useState, useEffect } from 'react';
 import OptimizedGraph from './components/Graph/OptimizedGraph';
 import './styles/App.css';
+import { getUserModifiedGraph,getFullGraph } from './firebase';
+import { BookOpen } from 'lucide-react';
+
+const GRAPH_CONFIG = {
+  'knowledge': {
+    name: 'What is Knowledge?',
+    description: 'The Socratic Question',
+    icon: <BookOpen className="w-6 h-6" />,
+    rootNode: '004d648a-1557-4549-8b22-fd1ae43fcd33'
+  },
+  'freedom': {
+    name: 'What is Freedom (in the sense of Liberty)?',
+    description: 'Philosophical perspectives on freedom and liberty',
+    icon: <BookOpen className="w-6 h-6" />,
+    rootNode: 'a5e92802-75b0-4c29-ad4f-f07d15889d15'
+  },
+  'reasons': {
+    name: 'What are Reasons?',
+    description: 'Philosophical perspectives on reasons',
+    icon: <BookOpen className="w-6 h-6" />,
+    rootNode: 'afb54e2d-3b82-464a-80d1-f766da42395b'
+  },
+  'semantics': {
+    name: 'What is Semantics?',
+    description: 'Philosophical perspectives on semantics',
+    icon: <BookOpen className="w-6 h-6" />,
+    rootNode: '069e0a67-8365-46b0-a5db-6c8013f18563'
+  }
+};
 
 function App() {
   const [graphs, setGraphs] = useState([]);
@@ -17,19 +46,19 @@ function App() {
   useEffect(() => {
     const loadGraphs = async () => {
       try {
-        console.log('Loading from base URL:', baseUrl);
-        const manifestResponse = await fetch(`${baseUrl}/graphs/graph-manifest.json`);
-        
-        if (!manifestResponse.ok) {
-          throw new Error(`Manifest HTTP error! status: ${manifestResponse.status}`);
+        let graphs = [];
+        // Populate graphs from GRAPH_CONFIG:
+        for (const [key, value] of Object.entries(GRAPH_CONFIG)) {
+          graphs.push({
+            id: key,
+            name: value.name,
+            description: value.description,
+            filename: null
+          });
         }
-
-        const manifestData = await manifestResponse.json();
-        console.log('Loaded manifest:', manifestData);
-
-        setGraphs(manifestData.graphs);
-        if (manifestData.graphs.length > 0) {
-          setSelectedGraph(manifestData.graphs[0].filename);
+        setGraphs(graphs);
+        if (graphs.length > 0) {
+          setSelectedGraph(graphs[3].id);
         }
       } catch (err) {
         console.error('Error loading graph list:', err);
@@ -48,16 +77,10 @@ function App() {
       setLoading(true);
       try {
         console.log('Loading graph:', selectedGraph);
-        const graphResponse = await fetch(`${baseUrl}/graphs/${selectedGraph}`);
-        
-        if (!graphResponse.ok) {
-          throw new Error(`Graph data HTTP error! status: ${graphResponse.status}`);
-        }
-
-        const data = await graphResponse.json();
-        console.log('Successfully loaded graph data:', data);
-        
-        setGraphData(data);
+        const graphResponse = await getUserModifiedGraph(selectedGraph);
+        console.log('Successfully downloaded graph data:', graphResponse);
+        setGraphData(graphResponse);
+        console.log('Successfully set graph data');
         setError(null);
       } catch (err) {
         console.error('Error loading graph data:', err);
@@ -96,7 +119,7 @@ function App() {
           >
             <option value="" disabled>Select a graph...</option>
             {graphs.map((graph) => (
-              <option key={graph.id} value={graph.filename}>
+              <option key={graph.id} value={graph.id}>
                 {graph.name}
               </option>
             ))}
@@ -107,7 +130,7 @@ function App() {
               className="text-gray-600 text-sm px-1"
               style={{ fontFamily: 'Crimson Text, Georgia, serif' }}
             >
-              {graphs.find(g => g.filename === selectedGraph)?.description}
+              {graphs.find(g => g.id === selectedGraph)?.description}
             </div>
           )}
         </div>

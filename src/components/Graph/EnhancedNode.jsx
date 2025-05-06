@@ -1,5 +1,6 @@
 // src/components/Graph/EnhancedNode.jsx
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { getNodeImages } from '../../firebase';
 
 const getNodeTypeColor = (nodeType) => {
   switch (nodeType?.toLowerCase()) {
@@ -23,6 +24,31 @@ const EnhancedNode = ({
   const nodeRef = useRef(null);
   const circleRef = useRef(null);
   const node = data[id];
+  const [nodeImage, setNodeImage] = useState(null);
+  
+  // Load node image if has_image is true
+  useEffect(() => {
+    const loadNodeImage = async () => {
+      if (node?.has_image) {
+        console.log(`Loading image for node ${node.id}, has_image flag is true`);
+        try {
+          const images = await getNodeImages(node.id);
+          console.log(`Retrieved images for node ${node.id}:`, images);
+          if (images.length > 0) {
+            console.log(`Setting image URL for node ${node.id}:`, images[0].url);
+            setNodeImage(images[0].url);
+          } else {
+            console.log(`No images found for node ${node.id}`);
+          }
+        } catch (error) {
+          console.error('Error loading node image:', error);
+        }
+      } else {
+        console.log(`Node ${node.id} has has_image flag set to false`);
+      }
+    };
+    loadNodeImage();
+  }, [node]);
   
   // Handle node references for positioning
   useEffect(() => {
@@ -44,9 +70,8 @@ const EnhancedNode = ({
   const identicalTo = node.identical_to;
   const isTerminal = isNonsense || identicalTo;
   
-  // Use a custom thumbnail image
-  // For GitHub Pages, use a relative path from the root of your deployed site
-  const thumbnailImage = process.env.PUBLIC_URL + "/assets/images/node-thumbnail.png"; // Update this path to match your repository structure
+  // Use node-specific image if available, otherwise use default thumbnail
+  const thumbnailImage = nodeImage || process.env.PUBLIC_URL + "/assets/images/node-thumbnail.png";
   
   // Truncate content for preview
   const truncateContent = (content) => {
@@ -54,46 +79,19 @@ const EnhancedNode = ({
     return content.length > 80 ? content.substring(0, 80) + '...' : content;
   };
   
-  // Parse content with curly braces into numbered bullets
-  const parseContent = (content) => {
-    if (!content) return null;
-    
-    // Use regex to match text inside curly braces
-    const regex = /\{([^{}]*)\}/g;
-    let match;
-    let bullets = [];
-    let count = 1;
-    
-    while ((match = regex.exec(content)) !== null) {
-      bullets.push({
-        number: count++,
-        text: match[1].trim()
-      });
-    }
-    
-    if (bullets.length === 0) {
-      // If no curly braces, return plain text
-      return <p className="text-sm text-gray-600 font-serif">{truncateContent(content)}</p>;
-    }
-    
-    return (
-      <div className="text-sm text-gray-600 font-serif space-y-1.5">
-        {bullets.map((bullet, index) => (
-          <div key={index} className="flex">
-            <span className="font-bold min-w-[20px] mr-1">{bullet.number}.</span>
-            <span>{bullet.text}</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   // Get node type colors
   const nodeColors = getNodeTypeColor(node.node_type);
 
-  // Fixed width and height for all nodes
-  const nodeWidth = 'w-96';
-  const nodeHeight = 'h-48';
+  // Compute scaling factor from averageRating
+  const avg = typeof node.averageRating === 'number' ? node.averageRating : 50;
+  const scale = 1 + 0.75 * (avg - 50) / 50;
+
+  // Base size in px
+  const baseWidth = 384; // w-96 = 24rem = 384px
+  const baseHeight = 192; // h-48 = 12rem = 192px
+
+  const nodeWidthPx = baseWidth * scale;
+  const nodeHeightPx = baseHeight * scale;
   
   // Highlight borders based on node type or identity
   let borderStyles = isInPath ? 'ring-2 ring-blue-600' : '';
@@ -126,11 +124,12 @@ const EnhancedNode = ({
       className={`
         ${isInPath ? 'z-10' : 'z-0'}
       `}
+      style={{ width: nodeWidthPx, height: nodeHeightPx, position: 'relative' }}
     >
       {/* Card styled after the visual example */}
       <div 
         className={`
-          ${nodeWidth} ${nodeHeight} rounded-lg overflow-hidden shadow-lg cursor-pointer
+          rounded-lg overflow-hidden shadow-lg cursor-pointer
           transition-all duration-300 transform
           ${borderStyles}
           ${isInPath ? 'scale-105 shadow-xl' : 'hover:shadow-xl hover:scale-105'}
@@ -140,6 +139,7 @@ const EnhancedNode = ({
           border-2
         `}
         onClick={() => onNodeClick(id)}
+        style={{ width: '100%', height: '100%' }}
       >
         <div className="flex h-full bg-white">
           {/* Square Image Column */}

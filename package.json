@@ -2,10 +2,11 @@
   "name": "graph-visualization",
   "version": "0.1.0",
   "private": true,
-"homepage": "https://yourusername.github.io/2D-QS-Viz",
+  "homepage": "https://yourusername.github.io/2D-QS-Viz",
   "dependencies": {
     "@react-three/drei": "^9.x",
     "@react-three/fiber": "^8.x",
+    "firebase": "^11.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "^5.0.1",
