@@ -216,22 +216,38 @@ export const getNodeImages = async (nodeId, collectionName = 'nodes') => {
   const listRef = ref(storage, `${collectionName}/${nodeId}/images`);
   
   try {
-    const res = await listAll(listRef);
+    console.log('Attempting to list items from storage...');
+    const res = await listAll(listRef).catch(error => {
+      console.error('Error in listAll operation:', error);
+      throw error;
+    });
+    
     console.log(`Found ${res.items.length} items in storage for node ${nodeId}`);
     const images = await Promise.all(
       res.items.map(async (itemRef) => {
-        const url = await getDownloadURL(itemRef);
-        console.log(`Generated download URL for ${itemRef.name}:`, url);
-        return {
-          id: itemRef.name,
-          url,
-          name: itemRef.name
-        };
+        try {
+          const url = await getDownloadURL(itemRef);
+          console.log(`Generated download URL for ${itemRef.name}:`, url);
+          return {
+            id: itemRef.name,
+            url,
+            name: itemRef.name
+          };
+        } catch (error) {
+          console.error(`Error getting download URL for ${itemRef.name}:`, error);
+          throw error;
+        }
       })
     );
     return images;
   } catch (error) {
-    console.error('Error fetching images:', error);
+    console.error('Error in getNodeImages:', error);
+    console.error('Error details:', {
+      code: error.code,
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
     return [];
   }
 };
