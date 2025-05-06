@@ -264,89 +264,26 @@ const createConnections = () => {
     }
   }, []);
 
-  // Live refresh polling
-  useEffect(() => {
-    let intervalId;
-    
-    if (isLiveRefresh && selectedGraphRef.current) {
-      console.log('Starting live refresh polling...');
-      intervalId = setInterval(async () => {
-        try {
-          console.log('Live refresh: Fetching new data...');
-          // Fetch new data
-          const newData = await getUserModifiedGraph(selectedGraphRef.current);
-          console.log('Live refresh: Received new data:', {
-            nodeCount: Object.keys(newData).length,
-            currentDataCount: Object.keys(data).length
-          });
-          
-          // Only update if data has changed
-          if (JSON.stringify(newData) !== JSON.stringify(data)) {
-            console.log('Live refresh: Data has changed, updating...');
-            // Store current viewport state
-            const currentViewport = lastViewportRef.current;
-            console.log('Live refresh: Current viewport state:', currentViewport);
-            
-            // Update data while preserving viewport
-            setData(newData);
-            setContainerOffset(currentViewport.offset);
-            setScale(currentViewport.scale);
-            setLayoutComputed(false); // Force layout recomputation
-            console.log('Live refresh: State updates queued');
-          } else {
-            console.log('Live refresh: No data changes detected');
-          }
-        } catch (error) {
-          console.error('Error in live refresh:', error);
-        }
-      }, 5000); // Poll every 5 seconds
-    }
-    
-    return () => {
-      if (intervalId) {
-        console.log('Cleaning up live refresh interval');
-        clearInterval(intervalId);
-      }
-    };
-  }, [isLiveRefresh, data]);
-
   // Compute layout when data changes
   useEffect(() => {
-    if (!data || Object.keys(data).length === 0) {
-      console.log('Layout computation skipped: No data available');
-      return;
-    }
+    if (!data || Object.keys(data).length === 0) return;
     
-    console.log('Computing optimal graph layout...', {
-      dataNodeCount: Object.keys(data).length,
-      currentLayoutComputed: layoutComputed,
-      isLiveRefresh
-    });
-    
+    console.log('Computing optimal graph layout...');
     try {
       // Compute layout using the parent-centered approach that stacks reasons directly above parents
       const initialLayout = computeGraphLayout(data);
-      console.log('Initial layout computed:', {
-        nodeCount: Object.keys(initialLayout).length
-      });
       
       // Detect and resolve any remaining collisions
       const resolvedLayout = detectAndResolveCollisions(initialLayout, data, 650, 450);
-      console.log('Collisions resolved');
       
       // Apply additional spacing to prevent overlaps
       const spacedLayout = addSpacingBetweenNodes(resolvedLayout, 1.2);
-      console.log('Spacing applied');
       
       // Normalize layout to fit within view
       const { positions: normalizedLayout } = normalizeLayout(spacedLayout);
-      console.log('Layout normalized:', {
-        nodeCount: Object.keys(normalizedLayout).length
-      });
       
       // If we're in live refresh mode, try to maintain node positions as much as possible
       if (isLiveRefresh && Object.keys(nodePositions).length > 0) {
-        console.log('Live refresh: Adjusting layout to maintain positions');
         // For each node in the new layout, try to find a similar position in the old layout
         const adjustedLayout = { ...normalizedLayout };
         Object.entries(normalizedLayout).forEach(([nodeId, newPos]) => {
@@ -359,24 +296,16 @@ const createConnections = () => {
             };
           }
         });
-        console.log('Live refresh: Layout adjusted', {
-          adjustedNodeCount: Object.keys(adjustedLayout).length
-        });
         setNodePositions(adjustedLayout);
       } else {
-        console.log('Setting new node positions:', {
-          nodeCount: Object.keys(normalizedLayout).length
-        });
         setNodePositions(normalizedLayout);
       }
       
       setLayoutComputed(true);
-      console.log('Layout computation complete');
       
       // Find and select question node (but don't display it)
       const questionNode = Object.entries(data).find(([_, node]) => node.node_type === 'question');
       if (questionNode && !selectedNode) {
-        console.log('Selecting question node:', questionNode[0]);
         handleNodeClick(questionNode[0]);
       }
     } catch (err) {
@@ -556,6 +485,40 @@ const createConnections = () => {
     }
   }, [containerOffset, scale, isDragging]);
 
+  // Live refresh polling
+  useEffect(() => {
+    let intervalId;
+    
+    if (isLiveRefresh && selectedGraphRef.current) {
+      intervalId = setInterval(async () => {
+        try {
+          // Fetch new data
+          const newData = await getUserModifiedGraph(selectedGraphRef.current);
+          
+          // Only update if data has changed
+          if (JSON.stringify(newData) !== JSON.stringify(data)) {
+            // Store current viewport state
+            const currentViewport = lastViewportRef.current;
+            
+            // Update data while preserving viewport
+            setData(newData);
+            setContainerOffset(currentViewport.offset);
+            setScale(currentViewport.scale);
+            setLayoutComputed(false); // Force layout recomputation
+          }
+        } catch (error) {
+          console.error('Error in live refresh:', error);
+        }
+      }, 5000); // Poll every 5 seconds
+    }
+    
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isLiveRefresh, data]);
+
   // Update selectedGraphRef when initialData changes
   useEffect(() => {
     if (initialData) {
@@ -566,56 +529,6 @@ const createConnections = () => {
       }
     }
   }, [initialData]);
-
-  // Add debug logging for node rendering
-  const renderNodes = () => {
-    if (!layoutComputed || !nodePositions) {
-      console.log('Skipping node render:', {
-        layoutComputed,
-        hasNodePositions: !!nodePositions
-      });
-      return null;
-    }
-
-    console.log('Rendering nodes:', {
-      nodePositionCount: Object.keys(nodePositions).length,
-      dataNodeCount: Object.keys(data).length
-    });
-
-    return Object.entries(nodePositions).map(([nodeId, position]) => {
-      // Skip the question node
-      if (data[nodeId]?.node_type === 'question') {
-        return null;
-      }
-      
-      console.log('Rendering node:', {
-        nodeId,
-        position,
-        hasData: !!data[nodeId]
-      });
-      
-      return (
-        <div
-          key={nodeId}
-          style={{
-            position: 'absolute',
-            left: `${position.x}px`,
-            top: `${position.y}px`,
-            transform: 'translate(-50%, -50%)', // Center the node
-          }}
-        >
-          <EnhancedNode
-            id={nodeId}
-            data={data}
-            onNodeClick={handleNodeClick}
-            activePath={activePath}
-            onNodeRef={handleNodeRef}
-            onCircleRef={(element) => saveCircleRef(nodeId, element)}
-          />
-        </div>
-      );
-    });
-  };
 
   return (
     <div className="h-screen w-full flex bg-white">
@@ -642,7 +555,33 @@ const createConnections = () => {
             {connections.length > 0 && <GraphConnections connections={connections} />}
             
             {/* Render nodes based on computed positions */}
-            {renderNodes()}
+            {layoutComputed && Object.entries(nodePositions).map(([nodeId, position]) => {
+              // Skip the question node
+              if (data[nodeId]?.node_type === 'question') {
+                return null;
+              }
+              
+              return (
+                <div
+                  key={nodeId}
+                  style={{
+                    position: 'absolute',
+                    left: `${position.x}px`,
+                    top: `${position.y}px`,
+                    transform: 'translate(-50%, -50%)', // Center the node
+                  }}
+                >
+                  <EnhancedNode
+                    id={nodeId}
+                    data={data}
+                    onNodeClick={handleNodeClick}
+                    activePath={activePath}
+                    onNodeRef={handleNodeRef}
+                    onCircleRef={(element) => saveCircleRef(nodeId, element)}
+                  />
+                </div>
+              );
+            })}
           </div>
           
           {/* Toggle panel button */}
