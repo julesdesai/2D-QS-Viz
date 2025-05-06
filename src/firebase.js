@@ -212,13 +212,16 @@ export const uploadImage = async (nodeId, file, collectionName = 'nodes') => {
 };
 
 export const getNodeImages = async (nodeId, collectionName = 'nodes') => {
+  console.log(`Fetching images for node ${nodeId} from collection ${collectionName}`);
   const listRef = ref(storage, `${collectionName}/${nodeId}/images`);
   
   try {
     const res = await listAll(listRef);
+    console.log(`Found ${res.items.length} items in storage for node ${nodeId}`);
     const images = await Promise.all(
       res.items.map(async (itemRef) => {
         const url = await getDownloadURL(itemRef);
+        console.log(`Generated download URL for ${itemRef.name}:`, url);
         return {
           id: itemRef.name,
           url,

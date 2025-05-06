@@ -30,14 +30,21 @@ const EnhancedNode = ({
   useEffect(() => {
     const loadNodeImage = async () => {
       if (node?.has_image) {
+        console.log(`Loading image for node ${node.id}, has_image flag is true`);
         try {
           const images = await getNodeImages(node.id);
+          console.log(`Retrieved images for node ${node.id}:`, images);
           if (images.length > 0) {
+            console.log(`Setting image URL for node ${node.id}:`, images[0].url);
             setNodeImage(images[0].url);
+          } else {
+            console.log(`No images found for node ${node.id}`);
           }
         } catch (error) {
           console.error('Error loading node image:', error);
         }
+      } else {
+        console.log(`Node ${node.id} has has_image flag set to false`);
       }
     };
     loadNodeImage();
