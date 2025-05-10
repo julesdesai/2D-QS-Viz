@@ -26,7 +26,6 @@ export function useCoordinateSystem(graphData) {
       console.warn('Invalid bounds object received:', bounds); 
       return;
     }
-    console.log(`Setting bounds for node ${nodeId}:`, bounds);
     coordSystemRef.current.setNodeBounds(nodeId, bounds);
 
     // After updating bounds, refresh connections for this node
